@@ -1,0 +1,99 @@
+{% extends "console_base.html" %}
+
+{% block title %}Asset Dashboard | AgnesNav{% endblock %}
+
+{% block console_content %}
+  <section class="metric-strip">
+    {% for metric in asset_metrics %}
+      <article class="metric-card {{ metric.tone }}">
+        <p>{{ metric.label }}</p>
+        <strong>{{ metric.value }}</strong>
+        {% if metric.subtext %}
+          <span>{{ metric.subtext }}</span>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="console-grid asset-grid">
+    <div class="console-panel map-panel">
+      <div class="panel-header">
+        <h2>Live Asset Map</h2>
+        <span>Realtime campus devices</span>
+      </div>
+      <div class="console-map" data-map data-mode="asset" data-markers='{{ asset_inventory | tojson }}'></div>
+    </div>
+
+    <div class="console-side-stack">
+      <article class="console-panel">
+        <div class="panel-header">
+          <h2>Asset Status</h2>
+          <span>Fleet distribution</span>
+        </div>
+        <div class="donut-chart" data-donut='{{ asset_status_segments | tojson }}'></div>
+        <div class="legend-list">
+          {% for segment in asset_status_segments %}
+            <div>
+              <span class="legend-dot" style="background: {{ segment.color }}"></span>
+              <span>{{ segment.label }} ({{ segment.value }}%)</span>
+            </div>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="console-panel">
+        <div class="panel-header">
+          <h2>Security Alerts</h2>
+          <span>Latest incidents</span>
+        </div>
+        <div class="feed-list">
+          {% for alert in security_alerts %}
+            <div class="feed-item {{ alert.level }}">
+              <strong>{{ alert.title }}</strong>
+              <p>{{ alert.detail }}</p>
+              <small>{{ alert.time }}</small>
+            </div>
+          {% endfor %}
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="console-panel">
+    <div class="panel-header">
+      <h2>Asset Inventory</h2>
+      <span>Search, report, and monitor last seen locations</span>
+    </div>
+    <div class="table-wrap">
+      <table class="ops-table">
+        <thead>
+          <tr>
+            <th>Asset Name</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Last Seen Location</th>
+            <th>Battery Level</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in asset_inventory %}
+            <tr>
+              <td>{{ item.name }}</td>
+              <td>{{ item.category }}</td>
+              <td><span class="status-pill {{ item.status | lower | replace(' ', '-') }}">{{ item.status }}</span></td>
+              <td>{{ item.last_seen }}</td>
+              <td>
+                <div class="battery-cell">
+                  <span>{{ item.battery_label }}</span>
+                  <div class="progress-bar"><span style="width: {{ item.battery_value }}%"></span></div>
+                </div>
+              </td>
+              <td><a href="#">View</a> <a href="#">Report</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "console_base.html" %}
+
+{% block title %}Operations Dashboard | AgnesNav{% endblock %}
+
+{% block console_content %}
+<section class="dashboard-shell">
+  <article class="console-panel assumption-panel">
+    <div class="panel-header">
+      <h2>Assumptions</h2>
+      <span>Dashboard shell mode</span>
+    </div>
+    <div class="assumption-list">
+      {% for assumption in assumptions %}
+      <p>{{ assumption }}</p>
+      {% endfor %}
+    </div>
+  </article>
+
+  <section class="kpi-grid">
+    {% for item in kpis %}
+    <article class="metric-card">
+      <p>{{ item.label }}</p>
+      <strong>{{ item.value }}</strong>
+      <span>{{ item.detail }}</span>
+    </article>
+    {% endfor %}
+  </section>
+
+  <section class="console-grid dashboard-grid">
+    <article class="console-panel trend-panel">
+      <div class="panel-header">
+        <h2>Trend Snapshot</h2>
+        <span>Reuse-ready trend placeholders</span>
+      </div>
+      <div class="trend-card-grid">
+        {% for series in trend_series %}
+        <div class="trend-card">
+          <div class="trend-copy">
+            <p>{{ series.label }}</p>
+            <strong>{{ series.value }}</strong>
+            <span>{{ series.delta }}</span>
+          </div>
+          <div class="trend-visual">
+            <div class="trend-line {{ series.tone }}"></div>
+            <div class="trend-axis">
+              {% for tick in trend_axis %}
+              <span>{{ tick }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <small>{{ series.detail }}</small>
+        </div>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="console-panel summary-panel">
+      <div class="panel-header">
+        <h2>Wiring Points</h2>
+        <span>Replace placeholders next</span>
+      </div>
+      <div class="summary-list">
+        <div>
+          <strong>Headline KPIs</strong>
+          <p>Swap in attendance, routing, or device counters from your real store.</p>
+        </div>
+        <div>
+          <strong>Trends</strong>
+          <p>Connect this panel to a dated analytics table or API when history exists.</p>
+        </div>
+        <div>
+          <strong>Breakdowns</strong>
+          <p>The table below already groups data by `kind`, so new entities can drop in cleanly.</p>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <article class="console-panel inventory-panel">
+    <div class="panel-header">
+      <h2>Breakdown Table</h2>
+      <span>Current campus entity mix</span>
+    </div>
+    <div class="table-wrap">
+      <table class="ops-table">
+        <thead>
+          <tr>
+            <th>Entity</th>
+            <th>Count</th>
+            <th>Share</th>
+            <th>Status</th>
+            <th>Source Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in breakdown_rows %}
+          <tr>
+            <td><strong>{{ row.name }}</strong></td>
+            <td>{{ row.count }}</td>
+            <td>{{ row.share }}%</td>
+            <td><span class="status-pill {{ row.status | lower | replace(' ', '-') }}">{{ row.status }}</span></td>
+            <td>{{ row.note }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+{% endblock %}

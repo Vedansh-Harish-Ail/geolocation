@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard | AgnesNav</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/stitch.css') }}">
+  <style>
+    .admin-feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+      margin: 24px 0;
+    }
+    .feature-card {
+      background: #fff;
+      padding: 24px;
+      border-radius: 20px;
+      border: 1px solid rgba(25, 54, 95, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 35px rgba(29, 56, 100, 0.1);
+      border-color: #2f69c5;
+    }
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 4px;
+    }
+    .feature-card h3 { margin: 0; font-size: 1.15rem; font-family: 'Outfit', sans-serif; }
+    .feature-card p { margin: 0; font-size: 0.9rem; color: #60708a; line-height: 1.5; }
+    
+    .qr-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      border: 1px solid #eee;
+      display: block;
+      cursor: pointer;
+    }
+    
+    .admin-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 21, 35, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 40px;
+      border-radius: 30px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #f4f7fb;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .qr-large {
+      width: 280px;
+      height: 280px;
+      margin: 20px auto;
+      border: 1px solid #eee;
+      padding: 10px;
+      border-radius: 12px;
+    }
+    
+    @media print {
+      .admin-sidebar, .admin-topbar, .admin-stat-grid, .admin-panel, .admin-flash, .admin-feature-grid, .no-print {
+        display: none !important;
+      }
+      .admin-body { background: #fff !important; }
+      .admin-stage { padding: 0 !important; margin: 0 !important; width: 100% !important; }
+      body { margin: 0; }
+      .print-only {
+        display: block !important;
+        text-align: center;
+        padding: 60px;
+      }
+      .print-only img {
+        width: 450px;
+        height: 450px;
+      }
+      .print-only h1 { margin-top: 30px; font-size: 2.5rem; }
+    }
+    .print-only { display: none; }
+
+    /* Toast Notifications */
+    .admin-flash {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 2000;
+      padding: 16px 24px;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      border: 1px solid rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      animation: toast-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      max-width: 320px;
+    }
+    .admin-flash-success { border-left: 5px solid #46c37b; color: #169c52; }
+    .admin-flash-danger { border-left: 5px solid #ff5b61; color: #c25252; }
+    .admin-flash-warning { border-left: 5px solid #ff9f43; color: #b06a24; }
+    .admin-flash-info { border-left: 5px solid #2f69c5; color: #204c94; }
+
+    @keyframes toast-in {
+      from { transform: translateX(120%) scale(0.9); opacity: 0; }
+      to { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    @keyframes toast-out {
+      from { transform: translateX(0) scale(1); opacity: 1; }
+      to { transform: translateX(120%) scale(0.9); opacity: 0; }
+    }
+  </style>
+</head>
+<body class="admin-body">
+
+  <!-- ── FLASH MESSAGES ── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div id="flash-container d-none" style="position:fixed; top:24px; right:24px; z-index:2000; pointer-events:none;">
+        {% for category, message in messages %}
+          <div class="admin-flash admin-flash-{{ category }}" style="pointer-events:auto; margin-bottom:12px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+              {% if category == 'success' %}<polyline points="20 6 9 17 4 12"></polyline>
+              {% elif category == 'danger' %}<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
+              {% else %}<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>{% endif %}
+            </svg>
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      <div class="brand-mark small">A</div>
+      <div>
+        <p class="admin-sidebar-name">AgnesNav</p>
+        <p class="admin-sidebar-sub">Admin Panel</p>
+      </div>
+    </div>
+
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="admin-nav-item {% if admin_tab == 'overview' %}active{% endif %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </a>
+      <a href="{{ url_for('admin_new_location') }}" class="admin-nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add New Location
+      </a>
+      <a href="{{ url_for('admin_new_route') }}" class="admin-nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Create New Path
+      </a>
+      <a href="{{ url_for('admin_qr_codes') }}" class="admin-nav-item {% if admin_tab == 'qrcodes' %}active{% endif %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="7" y="7" width="3" height="3"/><rect x="14" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/><rect x="14" y="14" width="3" height="3"/></svg>
+        QR Management
+      </a>
+    </nav>
+
+    <a href="{{ url_for('admin_logout') }}" class="admin-logout-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign Out
+    </a>
+  </aside>
+
+  <!-- ── MAIN STAGE ── -->
+  <main class="admin-stage">
+    <div class="admin-topbar">
+      <div>
+        <h1 class="admin-page-title">
+          {% if admin_tab == 'locations' %}Manage Locations
+          {% elif admin_tab == 'routes' %}Route Connections
+          {% elif admin_tab == 'qrcodes' %}QR Code Management
+          {% else %}Admin Console{% endif %}
+        </h1>
+        <p class="admin-page-sub">Campus Navigation System</p>
+      </div>
+      <div class="admin-topbar-actions">
+        <a href="{{ url_for('planner_view') }}" class="admin-view-site-btn" target="_blank">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View Live Site
+        </a>
+        <div class="admin-avatar">{{ session.get('admin_user', 'A')[0].upper() }}</div>
+      </div>
+    </div>
+
+    <!-- ── FLASH MESSAGES ── -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="admin-flash admin-flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- ═══════════════ CONSOLIDATED DASHBOARD ═══════════════ -->
+    
+    {% if admin_tab == 'overview' %}
+    
+    <div class="admin-feature-grid">
+      <a href="{{ url_for('admin_new_location') }}" class="feature-card">
+        <div class="feature-icon" style="background: rgba(47,105,197,0.1); color: #2f69c5;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <h3>Add Location</h3>
+        <p>Pin a new checkpoint or building to the campus map.</p>
+      </a>
+      <a href="{{ url_for('admin_new_route') }}" class="feature-card">
+        <div class="feature-icon" style="background: rgba(255,159,67,0.1); color: #ff9f43;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>Create Route</h3>
+        <p>Establish paths between two existing locations.</p>
+      </a>
+      <a href="{{ url_for('admin_qr_codes') }}" class="feature-card">
+        <div class="feature-icon" style="background: rgba(70,195,123,0.1); color: #46c37b;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="7" y="7" width="3" height="3"/><rect x="14" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/><rect x="14" y="14" width="3" height="3"/></svg>
+        </div>
+        <h3>Manage QR Codes</h3>
+        <p>Review, print, and regenerate all location checkpoints.</p>
+      </a>
+      <a href="{{ url_for('planner_view') }}" target="_blank" class="feature-card">
+        <div class="feature-icon" style="background: rgba(144,105,255,0.1); color: #9069ff;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h3>Live Planner</h3>
+        <p>View the campus navigation as a student/visitor would.</p>
+      </a>
+    </div>
+
+    <div class="admin-stat-grid">
+      <a href="{{ url_for('admin_locations') }}" class="admin-stat-card" style="text-decoration:none; color:inherit;">
+        <div class="admin-stat-icon" style="background:rgba(47,105,197,0.15);color:#2f69c5">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div>
+          <p class="admin-stat-label">Total Locations</p>
+          <p class="admin-stat-value">{{ locations | length }}</p>
+        </div>
+      </a>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background:rgba(255,159,67,0.15);color:#ff9f43">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div>
+          <p class="admin-stat-label">Connections</p>
+          <p class="admin-stat-value">{{ edges | length }}</p>
+        </div>
+      </div>
+    </div>
+{% endif %}
+
+{% if admin_tab == 'locations' %}
+      <!-- Locations Table -->
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Campus Locations</h2>
+          <div class="panel-actions">
+            <span class="admin-badge admin-badge-blue">{{ locations|length }} checkpoints</span>
+            <a href="{{ url_for('admin_new_location') }}" class="primary-button small">Add New</a>
+          </div>
+        </div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>Name</th><th>Type</th><th class="no-print">Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for loc in locations %}
+            <tr>
+              <td><strong>{{ loc.name }}</strong></td>
+              <td><span class="admin-badge">{{ loc.kind|default('Other') }}</span></td>
+              <td class="no-print">
+                <div style="display:flex;gap:8px">
+                  <a href="{{ url_for('admin_download_qr', slug=loc.slug) }}" class="admin-icon-btn" title="Download QR">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </a>
+                  <form action="{{ url_for('admin_delete_location', slug=loc.slug) }}" method="post" style="display:inline" onsubmit="return confirm('Delete this location?')">
+                    <button type="submit" class="admin-icon-btn danger" title="Delete">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+
+    {% if admin_tab == 'routes' %}
+      <!-- Connections Table -->
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <h2>Route Connections</h2>
+          <div class="panel-actions">
+            <span class="admin-badge admin-badge-blue">{{ edges|length }} segments</span>
+            <a href="{{ url_for('admin_new_route') }}" class="primary-button small">Create New</a>
+          </div>
+        </div>
+        <table class="admin-table">
+          <thead><tr><th>From</th><th>To</th><th>Distance (m)</th></tr></thead>
+          <tbody>
+            {% for edge in edges %}
+            <tr>
+              <td><strong>{{ edge.from }}</strong></td>
+              <td><strong>{{ edge.to }}</strong></td>
+              <td>{{ edge.distance }}m</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+
+    {% if admin_tab == 'qrcodes' %}
+      <!-- QR Management Grid -->
+      <div class="admin-panel">
+        <div class="admin-panel-head">
+          <div>
+            <h2>QR Assets Repository</h2>
+            <p class="admin-muted">Managed checkpoints for physical signage</p>
+          </div>
+          <div class="panel-actions">
+            <a href="{{ url_for('admin_generate_all_qrs') }}" class="secondary-button small">Regenerate All</a>
+          </div>
+        </div>
+        
+        <div class="qr-grid">
+          {% for loc in locations %}
+          <div class="qr-card">
+            <div class="qr-card-preview">
+              <img src="{{ url_for('static', filename='qrcodes/' + loc.slug + '.png') }}" 
+                   onerror="this.src='https://placehold.co/200x200?text=Missing+QR'"
+                   class="qr-preview-trigger"
+                   data-name="{{ loc.name }}"
+                   data-img="{{ url_for('static', filename='qrcodes/' + loc.slug + '.png') }}"
+                   data-slug="{{ loc.slug }}"
+                   style="cursor:pointer">
+            </div>
+            <div class="qr-card-info">
+              <h4>{{ loc.name }}</h4>
+              <code>/qr/{{ loc.slug }}</code>
+            </div>
+            <div class="qr-card-actions">
+              <a href="{{ url_for('admin_download_qr', slug=loc.slug) }}" class="icon-link-btn" title="Download">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </a>
+              <button class="icon-link-btn qr-preview-trigger" 
+                      data-name="{{ loc.name }}"
+                      data-img="{{ url_for('static', filename='qrcodes/' + loc.slug + '.png') }}"
+                      data-slug="{{ loc.slug }}"
+                      title="Print/Preview">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <style>
+        .qr-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 24px;
+          margin-top: 24px;
+        }
+        .qr-card {
+          background: #fff;
+          border-radius: 20px;
+          border: 1px solid rgba(25, 54, 95, 0.08);
+          overflow: hidden;
+          transition: all 0.2s ease;
+        }
+        .qr-card:hover { 
+          transform: translateY(-4px); 
+          box-shadow: 0 12px 30px rgba(29, 56, 100, 0.08);
+          border-color: #2f69c5;
+        }
+        .qr-card-preview {
+          background: #f8fafc;
+          padding: 24px;
+          display: grid;
+          place-items: center;
+          border-bottom: 1px solid #f1f5f9;
+        }
+        .qr-card-preview img {
+          width: 120px;
+          height: 120px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+          background: #fff;
+          padding: 4px;
+        }
+        .qr-card-info {
+          padding: 16px;
+          text-align: center;
+        }
+        .qr-card-info h4 { margin: 0 0 4px 0; font-family: 'Outfit', sans-serif; font-size: 1rem; }
+        .qr-card-info code { font-size: 0.75rem; color: #60708a; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+        .qr-card-actions {
+          padding: 12px;
+          display: flex;
+          justify-content: center;
+          gap: 16px;
+          background: #fdfdfe;
+          border-top: 1px solid #f8fafc;
+        }
+        .icon-link-btn {
+          background: none;
+          border: none;
+          padding: 8px;
+          color: #60708a;
+          cursor: pointer;
+          border-radius: 8px;
+          transition: all 0.2s;
+        }
+        .icon-link-btn:hover { background: #eef4ff; color: #2f69c5; }
+        
+        @media print {
+          .qr-grid { grid-template-columns: repeat(3, 1fr) !important; display: grid !important; gap: 40px !important; }
+          .qr-card { border: 1px solid #000 !important; page-break-inside: avoid; }
+          .qr-card-actions { display: none !important; }
+          .admin-panel-head { display: none !important; }
+        }
+      </style>
+    {% endif %}
+    <!-- QR Modal -->
+    <div id="qrModal" class="admin-modal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('qrModal')">&times;</button>
+        <h2 id="modalLabel">Location QR Code</h2>
+        <div class="qr-large">
+          <img id="modalQRImg" src="" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+        <p id="modalSlug" class="admin-muted" style="margin-bottom: 24px;"></p>
+        <div style="display:flex; gap:12px; justify-content: center;">
+          <a id="modalDownload" href="#" class="primary-button small">Download PNG</a>
+          <button onclick="window.print()" class="secondary-button small">Print Sign</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Print Only Content -->
+    <div id="printContainer" class="print-only">
+      <img id="printQRImg" src="">
+      <h1 id="printLabel"></h1>
+      <p>Scan to Navigate from here</p>
+    </div>
+
+  </main>
+  
+  <script>
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    
+    function showQR(name, imgUrl, slug) {
+      document.getElementById('modalLabel').innerText = name;
+      document.getElementById('modalQRImg').src = imgUrl;
+      document.getElementById('modalSlug').innerText = 'Path: /qr/' + slug;
+      document.getElementById('modalDownload').href = "/admin/qr/download/" + slug;
+      
+      // Setup print content
+      document.getElementById('printLabel').innerText = name;
+      document.getElementById('printQRImg').src = imgUrl;
+      
+      openModal('qrModal');
+    }
+
+    function copyQR(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        alert('QR URL copied: ' + url);
+      });
+    }
+    function editLocation(slug, name) {
+      alert('Edit UI for "' + name + '" — coming in next phase.');
+    }
+    
+    // Close modal on outside click
+    window.onclick = function(event) {
+      if (event.target.classList.contains('admin-modal')) {
+        event.target.style.display = "none";
+      }
+    }
+
+    // QR Preview Trigger Logic
+    document.addEventListener('click', function(e) {
+      const trigger = e.target.closest('.qr-preview-trigger');
+      if (trigger) {
+        const name = trigger.getAttribute('data-name');
+        const imgUrl = trigger.getAttribute('data-img');
+        const slug = trigger.getAttribute('data-slug');
+        showQR(name, imgUrl, slug);
+      }
+    });
+
+    // High-end Toast Auto-hide
+    document.querySelectorAll('.admin-flash').forEach(flash => {
+      setTimeout(() => {
+        flash.style.animation = 'toast-out 0.4s ease forwards';
+        setTimeout(() => flash.remove(), 400);
+      }, 4000);
+    });
+  </script>
+</body>
+</html>

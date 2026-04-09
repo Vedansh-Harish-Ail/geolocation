@@ -1,0 +1,72 @@
+{% extends "console_base.html" %}
+
+{% block title %}Hardware Setup | AgnesNav{% endblock %}
+
+{% block console_content %}
+  <section class="console-grid hardware-grid">
+    <article class="console-panel">
+      <div class="panel-header">
+        <h2>Beacon Inventory</h2>
+        <span>BLE, Wi-Fi, and UWB infrastructure</span>
+      </div>
+      <div class="table-wrap">
+        <table class="ops-table light">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Device Name/ID</th>
+              <th>Status</th>
+              <th>Location</th>
+              <th>Last Seen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for beacon in beacons %}
+              <tr>
+                <td>{{ beacon.type }}</td>
+                <td>{{ beacon.name }}</td>
+                <td><span class="status-pill {{ beacon.status | lower | replace(' ', '-') }}">{{ beacon.status }}</span></td>
+                <td>{{ beacon.location }}</td>
+                <td>{{ beacon.last_seen }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="console-panel">
+      <div class="panel-header">
+        <h2>Floor Plan: Main Building, 1st Floor</h2>
+        <a class="primary-button small" href="#">Add New Beacon</a>
+      </div>
+      <div class="console-map hardware-map" data-map data-mode="hardware" data-markers='{{ beacons | tojson }}'></div>
+    </article>
+
+    <div class="console-side-stack">
+      <article class="console-panel tool-panel">
+        <div class="panel-header">
+          <h2>Signal Strength Calibration</h2>
+          <span>Device tools</span>
+        </div>
+        <div class="curve-visual"></div>
+        <div class="slider-row">
+          <span>Calibration offset</span>
+          <div class="progress-bar"><span style="width: {{ firmware_status.calibration_offset }}%"></span></div>
+        </div>
+        <button class="primary-button full">Calibrate now</button>
+      </article>
+
+      <article class="console-panel tool-panel">
+        <div class="panel-header">
+          <h2>Firmware Updates</h2>
+          <span>Current Version: {{ firmware_status.version }}</span>
+        </div>
+        <button class="secondary-button full">Check for updates</button>
+        <button class="secondary-button full">Update all devices</button>
+        <p>Updating BLE-Gym-North-02: {{ firmware_status.progress }}%</p>
+        <div class="progress-bar"><span style="width: {{ firmware_status.progress }}%"></span></div>
+      </article>
+    </div>
+  </section>
+{% endblock %}

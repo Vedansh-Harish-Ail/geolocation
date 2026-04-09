@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}AgnesNav Console{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stitch.css') }}">
+  </head>
+  <body class="console-body {{ console_theme | default('console-dark') }}">
+    <div class="console-shell">
+      <aside class="console-sidebar">
+        <a class="console-brand" href="{{ url_for('index') }}">
+          <span class="brand-mark small">A</span>
+          <span>AgnesNav</span>
+        </a>
+
+        <nav class="console-nav">
+          <a href="{{ url_for('operations_dashboard') }}" class="{% if active_console == 'overview' %}active{% endif %}">Overview</a>
+          <a href="{{ url_for('planner_view') }}" class="{% if active_console == 'planner' %}active{% endif %}">Planner</a>
+          <a href="{{ url_for('assets_dashboard') }}" class="{% if active_console == 'assets' %}active{% endif %}">Assets</a>
+          <a href="{{ url_for('safety_dashboard') }}" class="{% if active_console == 'safety' %}active{% endif %}">Safety</a>
+          <a href="{{ url_for('hardware_dashboard') }}" class="{% if active_console == 'hardware' %}active{% endif %}">Hardware</a>
+          <a href="{{ url_for('directory') }}">Directory</a>
+        </nav>
+      </aside>
+
+      <div class="console-stage">
+        <header class="console-header">
+          <div>
+            <p class="console-kicker">Agnes College operations</p>
+            <h1>{{ console_title }}</h1>
+            <p class="console-subtitle">{{ console_subtitle }}</p>
+          </div>
+          <div class="console-toolbar">
+            <label class="console-search">
+              <span>Search</span>
+              <input type="text" value="" placeholder="Global Search..." readonly>
+            </label>
+            <div class="console-user">
+              <span class="console-avatar">A</span>
+              <div>
+                <strong>Admin</strong>
+                <small>Operations desk</small>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main class="console-main">
+          {% block console_content %}{% endblock %}
+        </main>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/stitch.js') }}"></script>
+  </body>
+</html>

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Add Campus Location | Admin Console{% endblock %}
+
+{% block content %}
+<!-- Leaflet CSS & JS for Interactive Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<section class="admin-form-shell">
+  <div class="form-header">
+    <a href="{{ url_for('admin_dashboard') }}" class="back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back to Dashboard
+    </a>
+    <h1>Add New Campus Location</h1>
+    <p>Click on the map to set the position, and link it to a nearby spot to create a path automatically.</p>
+  </div>
+
+  <!-- Form Panel -->
+  <form class="admin-standalone-card" method="post" action="{{ url_for('admin_add_location') }}">
+      <div class="form-group">
+        <label for="name">Location Name</label>
+        <input type="text" id="name" name="name" placeholder="e.g. Science Block A" required>
+      </div>
+
+      <div class="form-group">
+        <label for="slug">Location Slug (URL ID)</label>
+        <input type="text" id="slug" name="slug" placeholder="e.g. science-block-a" required>
+        <small>Keep it short and unique for QR codes.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="image_url">Location Image URL</label>
+        <input type="url" id="image_url" name="image_url" placeholder="https://example.com/photo.jpg">
+        <small>Provide a photo link to help users identify the spot.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="floor">Floor / Level</label>
+        <select id="floor" name="floor" required>
+          <option value="Basement">Basement</option>
+          <option value="Ground Floor" selected>Ground Floor</option>
+          <option value="1st Floor">1st Floor</option>
+          <option value="2nd Floor">2nd Floor</option>
+          <option value="3rd Floor">3rd Floor</option>
+          <option value="4th Floor">4th Floor</option>
+          <option value="5th Floor">5th Floor</option>
+        </select>
+        <small>Required for floor-aware routing (stairs/elevators).</small>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Short Description</label>
+        <textarea id="description" name="description" placeholder="Brief info about this spot..." rows="2"></textarea>
+      </div>
+
+      <!-- Type defaults to Other for generic simplicity -->
+      <input type="hidden" name="kind" value="Other">
+
+      <div class="form-actions">
+        <button type="submit" class="primary-button full-width highlight">Save & Link Location</button>
+      </div>
+  </form>
+</section>
+
+<style>
+  .admin-form-shell {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  .form-header { margin-bottom: 30px; }
+  .form-header h1 { margin: 10px 0 5px; font-size: 2.2rem; }
+  .back-link { 
+    display: flex; align-items: center; gap: 8px; 
+    color: var(--site-blue); font-weight: 700; text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .admin-interactive-layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 30px;
+    align-items: start;
+  }
+  .admin-standalone-card {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 32px;
+    padding: 30px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .map-hint { 
+    display: flex; align-items: center; gap: 8px; 
+    margin-top: 12px; color: var(--site-muted); font-size: 0.9rem; font-weight: 600;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-group label { font-weight: 800; font-size: 0.9rem; color: var(--site-ink); }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(0,0,0,0.08);
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: #fbfcfe;
+  }
+  .form-group input:focus { outline: none; border-color: var(--site-blue); }
+  .form-group small { font-size: 0.78rem; color: var(--site-muted); }
+  .form-actions { margin-top: 10px; }
+  .full-width.primary-button { padding: 16px; font-size: 1.1rem; }
+  .highlight { background: linear-gradient(135deg, #2a6ac3 0%, #1e56a4 100%); }
+
+  @media (max-width: 900px) {
+    .admin-interactive-layout { grid-template-columns: 1fr; }
+  }
+</style>
+
+
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Find Location | AgnesNav{% endblock %}
+
+{% block head %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <section class="planner-layout">
+    <!-- ──────────────── SIDEBAR ──────────────── -->
+    <aside class="planner-sidebar">
+      <p class="section-tag">Navigation</p>
+      <h1 class="page-title planner-title">Campus Navigation &amp; Route Planner</h1>
+
+      <!-- ── QR SCANNER CARD ── -->
+      <div class="qr-scanner-card">
+        <div class="qr-scanner-header">
+          <div class="qr-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="3" height="3" rx="0.5"/><rect x="19" y="14" width="2" height="2" rx="0.5"/>
+              <rect x="14" y="19" width="7" height="2" rx="0.5"/>
+            </svg>
+          </div>
+          <div>
+            <p class="qr-card-title">Scan QR Code</p>
+            <p class="qr-card-sub">Point camera at any campus QR marker</p>
+          </div>
+        </div>
+
+        <div id="qr-reader-container" style="display:none;">
+          <div id="qr-reader"></div>
+          <p class="qr-scan-hint">🎯 Hold steady — scanning in progress…</p>
+        </div>
+
+        <div id="qr-result-box" class="qr-result-box" style="display:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2dc76b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div>
+            <p class="qr-result-label">Location detected</p>
+            <p id="qr-result-text" class="qr-result-value">—</p>
+          </div>
+        </div>
+
+        <div class="qr-btn-row">
+          <button class="qr-scan-btn" id="btn-start-scan" onclick="startQRScan()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"/></svg>
+            Start Scanning
+          </button>
+          <button class="qr-stop-btn" id="btn-stop-scan" onclick="stopQRScan()" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            Stop
+          </button>
+        </div>
+
+        <div class="qr-divider"><span>or enter manually</span></div>
+
+        <!-- Manual Entry -->
+        <div class="manual-entry-row">
+          <input type="text" id="manual-qr-input" class="manual-qr-input" placeholder="e.g. http://…/qr/main-gate"
+                 onkeydown="if(event.key==='Enter') applyManualQR()"/>
+          <button class="manual-apply-btn" onclick="applyManualQR()" title="Apply">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── ROUTE FORM ── -->
+      <form class="planner-form" action="{{ url_for('route_redirect') }}" method="post" id="planner-form">
+        <label for="source">Current location</label>
+        <select id="source" name="source">
+          <option value="">Choose your start point</option>
+          {% for location in locations %}
+            <option value="{{ location.slug }}" {% if source and source.slug == location.slug %}selected{% endif %}>{{ location.name }}</option>
+          {% endfor %}
+        </select>
+
+        <label for="destination">Destination</label>
+        <select id="destination" name="destination">
+          <option value="">Choose your destination</option>
+          {% for location in locations %}
+            <option value="{{ location.slug }}" {% if destination and destination.slug == location.slug %}selected{% endif %}>{{ location.name }}</option>
+          {% endfor %}
+        </select>
+
+        <!-- Accessibility Toggles -->
+        <div class="toggle-group">
+          <div class="toggle-row" onclick="toggleSwitch(this)">
+            <span>Use elevators</span>
+            <span class="toggle on" data-name="use_elevators">ON</span>
+          </div>
+          <div class="toggle-row" onclick="toggleSwitch(this)">
+            <span>Avoid stairs</span>
+            <span class="toggle on" data-name="avoid_stairs">ON</span>
+          </div>
+          <div class="toggle-row" onclick="toggleSwitch(this)">
+            <span>Accessible routes only</span>
+            <span class="toggle" data-name="accessible_only">OFF</span>
+          </div>
+          <div class="toggle-row" onclick="toggleSwitch(this)">
+            <span>Avoid crowded paths</span>
+            <span class="toggle" data-name="avoid_crowds">OFF</span>
+          </div>
+        </div>
+        <!-- Hidden inputs for toggle state -->
+        <input type="hidden" name="use_elevators" id="hid-use_elevators" value="on">
+        <input type="hidden" name="avoid_stairs" id="hid-avoid_stairs" value="on">
+        <input type="hidden" name="accessible_only" id="hid-accessible_only" value="off">
+        <input type="hidden" name="avoid_crowds" id="hid-avoid_crowds" value="off">
+
+        <button type="submit" id="find-route-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Find Route
+        </button>
+      </form>
+
+      <div class="planner-quick-links">
+        <p class="planner-subhead">Popular destinations</p>
+        {% for item in quick_links %}
+          <a href="{{ url_for('planner_view', source=source.slug if source else '', destination=item.slug) }}">{{ item.name }}</a>
+        {% endfor %}
+      </div>
+
+      <div class="planner-qr-box">
+        <p class="planner-subhead">QR sample entry</p>
+        <code>{{ request.url_root }}qr/main-gate</code>
+      </div>
+    </aside>
+
+    <!-- ──────────────── MAP STAGE ──────────────── -->
+    <div class="planner-stage">
+      <div class="planner-map-header">
+        <div class="level-tabs">
+          <button onclick="setLevel(this,1)">Level 1</button>
+          <button onclick="setLevel(this,2)">Level 2</button>
+          <button class="active" onclick="setLevel(this,3)">Level 3</button>
+          <button onclick="setLevel(this,4)">Level 4</button>
+        </div>
+        {% if source and destination and total_distance is not none %}
+          <div class="planner-summary">
+            <span>{{ walk_minutes }} min walk</span>
+            <span>{{ total_distance | int }}m</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="planner-map-card" data-map data-mode="planner"
+           data-locations='{{ locations | tojson }}'
+           data-edges='{{ edges | tojson }}'
+           data-path='{{ path_slugs | tojson }}'></div>
+
+      <section class="route-panel">
+        <div>
+          <p class="section-tag">Route details &amp; directions</p>
+          {% if source and destination and total_distance is not none %}
+            <h2>{{ walk_minutes }} min walk</h2>
+            <p class="route-meta">Distance: {{ total_distance | int }}m</p>
+          {% else %}
+            <h2>Choose a route to begin.</h2>
+            <p class="route-meta">Select a source and destination or scan a QR-coded location.</p>
+          {% endif %}
+        </div>
+
+        {% if route_error %}
+          <p class="route-error">{{ route_error }}</p>
+        {% endif %}
+
+        <div class="route-steps">
+          {% for step in route_details %}
+            <article class="route-step">
+              <span>{{ loop.index }}</span>
+              <div>
+                <strong>{{ step.instruction }}</strong>
+                <p>{{ step.name }}{% if step.segment_distance %} · walk {{ step.segment_distance | int }}m from the previous point{% endif %}</p>
+              </div>
+            </article>
+          {% else %}
+            <article class="route-step muted-step">
+              <span>1</span>
+              <div>
+                <strong>Start from any mapped checkpoint.</strong>
+                <p>Register your first locations in the Admin Panel to see them here.</p>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+
+        <a class="primary-button route-action"
+           href="{{ url_for('planner_view') }}">
+          Start navigation
+        </a>
+      </section>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let html5QrCode = null;
+
+  function startQRScan() {
+    document.getElementById('qr-reader-container').style.display = 'block';
+    document.getElementById('btn-start-scan').style.display = 'none';
+    document.getElementById('btn-stop-scan').style.display = 'flex';
+    document.getElementById('qr-result-box').style.display = 'none';
+
+    html5QrCode = new Html5Qrcode("qr-reader");
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 200, height: 200 } },
+      (decodedText) => {
+        handleQRResult(decodedText);
+        stopQRScan();
+      },
+      () => {}
+    ).catch(() => {
+      document.getElementById('qr-reader-container').style.display = 'none';
+      document.getElementById('btn-start-scan').style.display = 'flex';
+      document.getElementById('btn-stop-scan').style.display = 'none';
+      alert('Camera not available. Please use the manual entry field below.');
+    });
+  }
+
+  function stopQRScan() {
+    if (html5QrCode) {
+      html5QrCode.stop().catch(() => {});
+      html5QrCode = null;
+    }
+    document.getElementById('qr-reader-container').style.display = 'none';
+    document.getElementById('btn-start-scan').style.display = 'flex';
+    document.getElementById('btn-stop-scan').style.display = 'none';
+  }
+
+  function handleQRResult(text) {
+    document.getElementById('qr-result-box').style.display = 'flex';
+    document.getElementById('qr-result-text').textContent = text;
+
+    // Extract slug from URL like /qr/main-gate
+    const match = text.match(/\/qr\/([a-z0-9-]+)/i);
+    if (match) {
+      const slug = match[1];
+      document.getElementById('source').value = slug;
+    } else {
+      document.getElementById('manual-qr-input').value = text;
+    }
+  }
+
+  function applyManualQR() {
+    const val = document.getElementById('manual-qr-input').value.trim();
+    if (!val) return;
+    handleQRResult(val);
+  }
+
+  function toggleSwitch(row) {
+    const toggle = row.querySelector('.toggle');
+    const name = toggle.dataset.name;
+    const isOn = toggle.classList.contains('on');
+    toggle.classList.toggle('on', !isOn);
+    toggle.textContent = isOn ? 'OFF' : 'ON';
+    const hidden = document.getElementById('hid-' + name);
+    if (hidden) hidden.value = isOn ? 'off' : 'on';
+  }
+
+  function setLevel(btn, level) {
+    document.querySelectorAll('.level-tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+</script>
+{% endblock %}

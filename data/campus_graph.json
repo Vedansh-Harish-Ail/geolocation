@@ -1,0 +1,31 @@
+{
+  "locations": [
+    {
+      "slug": "main-gate",
+      "name": "Main Gate",
+      "kind": "Other",
+      "x": 50,
+      "y": 42,
+      "description": "",
+      "image_url": ""
+    },
+    {
+      "slug": "reception",
+      "name": "Reception",
+      "kind": "Other",
+      "x": 55,
+      "y": 58,
+      "description": "",
+      "image_url": ""
+    }
+  ],
+  "edges": [
+    {
+      "from": "reception",
+      "to": "main-gate",
+      "distance": 16,
+      "type": "way",
+      "is_accessible": true
+    }
+  ]
+}

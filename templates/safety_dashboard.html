@@ -1,0 +1,114 @@
+{% extends "console_base.html" %}
+
+{% block title %}Safety & Analytics | AgnesNav{% endblock %}
+
+{% block console_content %}
+<section class="console-grid safety-grid">
+  <!-- Zone Monitoring Map -->
+  <article class="console-panel map-panel">
+    <div class="panel-header">
+      <h2>Campus Safety Map</h2>
+      <span>Live crowd density & security zones</span>
+    </div>
+    <div class="console-map binary-map" data-map data-mode="safety" data-heatmap='{{ zones | tojson }}'>
+      <!-- Heatmap/Safety markers would be rendered here by JS -->
+    </div>
+  </article>
+
+  <div class="console-side-stack">
+    <!-- Quick Protocols -->
+    <article class="console-panel protocol-panel">
+      <div class="panel-header">
+        <h2>Emergency Protocols</h2>
+        <span>One-tap command center</span>
+      </div>
+      <div class="toggle-group">
+        {% for protocol in protocols %}
+        <div class="toggle-row">
+          <span>{{ protocol }}</span>
+          <button class="alert-button small">Trigger</button>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="danger-button full" style="margin-top:12px;">ACTIVATE LOCKDOWN</button>
+    </article>
+
+    <!-- Panic Triggers -->
+    <article class="console-panel status-panel">
+      <div class="panel-header">
+        <h2>Panic Alarms</h2>
+        <span>Active device triggers</span>
+      </div>
+      {% if triggers %}
+        <div class="panic-list">
+          {% for trigger in triggers %}
+          <div class="panic-item active">
+            <strong>{{ trigger.location }}</strong>
+            <small>{{ trigger.time }}</small>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>No active alarms</p>
+        </div>
+      {% endif %}
+    </article>
+  </div>
+
+  <!-- Safety Event Feed -->
+  <article class="console-panel feed-panel">
+    <div class="panel-header">
+      <h2>Event Log</h2>
+      <span>Campus security activity</span>
+    </div>
+    <div class="feed-list">
+      {% if events %}
+        {% for event in events %}
+        <div class="feed-item {{ event.level }}">
+          <div class="item-head">
+            <strong>{{ event.type }}</strong>
+            <small>{{ event.time }}</small>
+          </div>
+          <p>{{ event.message }}</p>
+          <small>Unit: {{ event.responding_unit }}</small>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <p>No recent events logged</p>
+        </div>
+      {% endif %}
+    </div>
+    <button class="secondary-button full small">Export logs</button>
+  </article>
+</section>
+
+<style>
+  .safety-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .map-panel {
+    grid-row: span 2;
+  }
+  .panic-list {
+    display: grid;
+    gap: 12px;
+  }
+  .panic-item.active {
+    padding: 14px;
+    border-radius: 14px;
+    border-left: 4px solid var(--console-red);
+    background: rgba(255, 91, 97, 0.1);
+    animation: pulse-red 2s infinite;
+  }
+  @keyframes pulse-red {
+    0% { background: rgba(255, 91, 97, 0.1); }
+    50% { background: rgba(255, 91, 97, 0.2); }
+    100% { background: rgba(255, 91, 97, 0.1); }
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}AgnesNav | Smart Indoor Navigation{% endblock %}
+
+{% block content %}
+  <section class="landing-hero">
+    <div class="landing-copy">
+      <p class="section-tag">Advanced Indoor Navigation &amp; Wayfinding for Universities</p>
+      <h1 class="hero-title">Smart Campus Navigation</h1>
+      <p class="hero-desc">Explore the campus layout and find your destination instantly. Simple, accessible, and digital.</p>
+
+      <div class="hero-actions">
+        <a class="primary-button" href="{{ url_for('planner_view') }}" id="btn-find-location">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:7px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Find Location
+        </a>
+        <a class="secondary-button" href="{{ url_for('admin_login') }}" id="btn-admin-panel">Admin Panel</a>
+      </div>
+
+      <div class="metric-row">
+        <!-- System ready for data initialization -->
+      </div>
+    </div>
+
+    <div class="landing-visual">
+      <div class="visual-caption">Campus Intelligence Workspace</div>
+      <div class="map-placeholder-box">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(100,160,255,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 18l-2-1-6 3V7l6-3 6 3 6-3v7M9 4v13M15 7v5"/><circle cx="18" cy="18" r="3"/><path d="M18 15v3l2 2"/>
+        </svg>
+        <p>No location data available yet.</p>
+        <small>Visit the <strong>Admin Panel</strong> to start adding campus locations, maps, and route checkpoints.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="planner-strip">
+    <div>
+      <p class="section-tag">Quick route finder</p>
+      <h2>Scan a QR code or search your destination.</h2>
+    </div>
+    <form class="planner-strip-form" action="{{ url_for('route_redirect') }}" method="post">
+      <select name="source" required>
+        <option value="">Start location</option>
+        {% for location in locations %}
+          <option value="{{ location.slug }}">{{ location.name }}</option>
+        {% endfor %}
+      </select>
+      <select name="destination" required>
+        <option value="">Destination</option>
+        {% for location in locations %}
+          <option value="{{ location.slug }}">{{ location.name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">Find Route</button>
+    </form>
+  </section>
+
+  <!-- Highlight grid removed for lean version -->
+{% endblock %}

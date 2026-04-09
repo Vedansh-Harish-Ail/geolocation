@@ -1,0 +1,109 @@
+{% extends "console_base.html" %}
+
+{% block title %}Asset Tracking | AgnesNav{% endblock %}
+
+{% block console_content %}
+<section class="console-grid assets-grid">
+  <div class="console-side-stack">
+    <article class="console-panel stats-panel">
+      <div class="panel-header">
+        <h2>Inventory Metrics</h2>
+        <span>Live campus data</span>
+      </div>
+      <div class="metrics-stack">
+        {% for m in metrics %}
+        <div class="metric-mini {{ m.tone }}">
+          <p>{{ m.label }}</p>
+          <strong>{{ m.value }}</strong>
+          {% if m.subtext %}<small>{{ m.subtext }}</small>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="console-panel status-panel">
+      <div class="panel-header">
+        <h2>Asset Status</h2>
+        <span>Distribution by state</span>
+      </div>
+      <div class="donut-wrap">
+        <div class="donut-chart" data-donut='{{ donut_segments | tojson }}'></div>
+        <div class="donut-legend">
+          {% for s in donut_segments %}
+          <div class="legend-item">
+            <span class="dot" style="background:{{ s.color }}"></span>
+            <span>{{ s.label }} ({{ s.value }}%)</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <article class="console-panel map-panel">
+    <div class="panel-header">
+      <h2>Campus Asset Map</h2>
+      <span>Real-time device locations</span>
+    </div>
+    <div class="console-map binary-map" data-map data-mode="assets" data-markers='{{ inventory | tojson }}'></div>
+  </article>
+
+  <article class="console-panel feed-panel">
+    <div class="panel-header">
+      <h2>Security Alerts</h2>
+      <span>Movement & Geofence alarms</span>
+    </div>
+    <div class="feed-list">
+      {% for alert in alerts %}
+      <div class="feed-item {{ alert.level }}">
+        <div class="item-head">
+          <strong>{{ alert.title }}</strong>
+          <small>{{ alert.time }}</small>
+        </div>
+        <p>{{ alert.detail }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <button class="secondary-button full small">View all alerts</button>
+  </article>
+</section>
+
+<article class="console-panel inventory-panel">
+  <div class="panel-header">
+    <h2>Device Inventory</h2>
+    <div class="panel-actions">
+      <input type="text" placeholder="Filter devices..." class="small-input">
+      <button class="primary-button small">Add Asset</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="ops-table">
+      <thead>
+        <tr>
+          <th>Asset Model</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Last Known Location</th>
+          <th>Power</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in inventory %}
+        <tr>
+          <td><strong>{{ item.name }}</strong></td>
+          <td>{{ item.category }}</td>
+          <td><span class="status-pill {{ item.status | lower | replace(' ', '-') }}">{{ item.status }}</span></td>
+          <td>{{ item.last_seen }}</td>
+          <td>
+            <div class="battery-row">
+              <div class="battery-bar"><span style="width: {{ item.battery_value }}%"></span></div>
+              <span>{{ item.battery_label }}</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+{% endblock %}
